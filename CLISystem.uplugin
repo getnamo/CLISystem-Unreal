@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0.0",
+	"FriendlyName": "CLISystem",
+	"Description": "",
+	"Category": "CLI",
+	"CreatedBy": "getnamo",
+	"CreatedByURL": "https://github.com/getnamo",
+	"DocsURL": "https://github.com/getnamo/CLISystem-Unreal/",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/getnamo/CLISystem-Unreal/issues",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "CLISystem",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		}
+	]
+}
