@@ -18,16 +18,16 @@ struct CLISYSTEM_API FProcessParams
 	FString InitialStdInput;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
-	bool bLaunchDetached;
+	bool bLaunchDetached = false;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
-	bool bLaunchHidden;
+	bool bLaunchHidden = true;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
-	bool bLaunchReallyHidden;
+	bool bLaunchReallyHidden = true;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
-	int32 PriorityModifier;
+	int32 PriorityModifier = 0;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
 	FString OptionalWorkingDirectory;
