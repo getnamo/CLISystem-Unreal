@@ -17,16 +17,16 @@ class CLISYSTEM_API UCLIProcessComponent : public UActorComponent
 	GENERATED_UCLASS_BODY()
 public:
 
-	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events")
+	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events", meta = (BlueprintInternalUseOnly, HideInDetailPanel))
 	FCLIBeginProcessSignature OnBeginProcessing;
 
-	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events")
+	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events", meta = (BlueprintInternalUseOnly, HideInDetailPanel))
 	FCLIEndProcessSignature OnEndProcessing;
 
-	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events")
+	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events", meta = (BlueprintInternalUseOnly, HideInDetailPanel))
 	FCLIOutputStringSignature OnOutputText;
 
-	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events")
+	UPROPERTY(BlueprintAssignable, Category = "CLIProcess Events", meta = (BlueprintInternalUseOnly, HideInDetailPanel))
 	FCLIOutputBinarySignature OnOutputBytes;
 
 	//Overwrite these in your subclass CLI components to specialize them
