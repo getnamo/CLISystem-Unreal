@@ -172,9 +172,10 @@ void FSubProcessHandler::StopProcess()
 {
 	if (State.ProcessHandle.IsValid())
 	{
+		ClosePipes();
+
 		//Maybe queue input to bg thread?
 		FPlatformProcess::TerminateProc(State.ProcessHandle, false);
-		ClosePipes();
 	}
 }
 
