@@ -106,6 +106,10 @@ void FSubProcessHandler::StartProcess(const FProcessParams& InParams)
 						OnProcessOutputBytes(LocalId, Buffer);
 					}
 				}
+				else if (Params.IdleReadSleepSeconds > 0.f)
+				{
+					FPlatformProcess::Sleep(Params.IdleReadSleepSeconds);
+				}
 			} while (FPlatformProcess::IsProcRunning(State.ProcessHandle));
 		}
 		else
@@ -144,6 +148,10 @@ void FSubProcessHandler::StartProcess(const FProcessParams& InParams)
 							OnProcessOutput(LocalId, LatestOutput);
 						}
 					}
+				}
+				else if (Params.IdleReadSleepSeconds > 0.f)
+				{
+					FPlatformProcess::Sleep(Params.IdleReadSleepSeconds);
 				}
 			} while (FPlatformProcess::IsProcRunning(State.ProcessHandle) || !LatestOutput.IsEmpty());
 		}

@@ -41,6 +41,12 @@ struct CLISYSTEM_API FProcessParams
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
 	bool bWaitForSend = false;
 
+	//Seconds the output reader sleeps when a poll finds no new output. Pipe reads don't
+	//block, so 0 (default) polls continuously for the lowest latency but keeps a core busy
+	//while the process runs; e.g. 0.001 trades up to ~1ms latency for an idle thread.
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "FProcessParams")
+	float IdleReadSleepSeconds = 0.f;
+
 	EAsyncExecution ExecutionContext = EAsyncExecution::Thread;
 };
 
