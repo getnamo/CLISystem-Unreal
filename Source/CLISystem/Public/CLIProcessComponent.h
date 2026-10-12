@@ -62,4 +62,8 @@ public:
 
 protected:
 	TSharedPtr<FSubProcessHandler> ProcessHandler;
+
+	//StartProcess was called and OnProcessBegin hasn't arrived yet. Lazy auto-start checks it so input sent
+	//during startup doesn't launch a second process.
+	bool bProcessStarting = false;
 };

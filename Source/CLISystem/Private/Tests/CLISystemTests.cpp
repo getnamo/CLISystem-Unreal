@@ -14,6 +14,12 @@
 #include "HAL/PlatformTime.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "CLIProcessComponent.h"
+#include "CLISystemTestReceiver.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
 #include <atomic>
 
 namespace CLISystemTests
@@ -423,6 +429,79 @@ bool FCLIDestroyWhileRunningTest::RunTest(const FString&)
 	});
 	//Let any game-thread tasks queued before the destroy run: they must see the handler is gone
 	ADD_LATENT_AUTOMATION_COMMAND(FDelayedFunctionLatentCommand([this, C] { TestFalse(TEXT("no end event after destroy"), C->bEnded.load()); }, 0.5f));
+	return true;
+}
+
+// ------------------------------------------------------------------------------------------------- component
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FCLIComponentSendDuringStartupTest, "CLISystem.Component.SendDuringStartup", CLISystemTests::Flags)
+bool FCLIComponentSendDuringStartupTest::RunTest(const FString&)
+{
+	//SendInput right after BeginPlay, before OnProcessBegin: must not launch a second process. With
+	//bAsyncStdinWrites the input is also kept and delivered once the process is up.
+	struct FEnv
+	{
+		UGameInstance* GameInstance = nullptr;
+		UWorld* World = nullptr;
+		UCLISystemTestReceiver* AsyncReceiver = nullptr;
+		UCLISystemTestReceiver* DefaultReceiver = nullptr;
+		UCLIProcessComponent* AsyncComponent = nullptr;
+		UCLIProcessComponent* DefaultComponent = nullptr;
+	};
+	TSharedRef<FEnv> E = MakeShared<FEnv>();
+	E->GameInstance = NewObject<UGameInstance>(GEngine);
+	E->GameInstance->AddToRoot();
+	E->GameInstance->InitializeStandalone();
+	E->World = E->GameInstance->GetWorld();
+	E->World->InitializeActorsForPlay(FURL());
+
+	auto Spawn = [&E](bool bAsync, UCLISystemTestReceiver*& OutReceiver) -> UCLIProcessComponent*
+	{
+		OutReceiver = NewObject<UCLISystemTestReceiver>();
+		OutReceiver->AddToRoot();
+		AActor* Actor = E->World->SpawnActor<AActor>();
+		UCLIProcessComponent* C = NewObject<UCLIProcessComponent>(Actor);
+		C->CLIParams = ShellParams(InteractiveArgs());
+		C->CLIParams.bProcessInBytes = true;
+		C->CLIParams.bOutputToGameThread = true;
+		C->CLIParams.bBlockingRead = bAsync;
+		C->CLIParams.bAsyncStdinWrites = bAsync;
+		C->OnBeginProcessing.AddDynamic(OutReceiver, &UCLISystemTestReceiver::OnBegin);
+		C->OnEndProcessing.AddDynamic(OutReceiver, &UCLISystemTestReceiver::OnEnd);
+		C->OnOutputBytes.AddDynamic(OutReceiver, &UCLISystemTestReceiver::OnBytes);
+		C->RegisterComponent();
+		Actor->DispatchBeginPlay(); //bStartProcessOnBeginPlay
+		C->SendInput(EchoCommand(TEXT("early_one")));
+		C->SendInput(EchoCommand(TEXT("early_two")));
+		return C;
+	};
+	E->AsyncComponent = Spawn(true, E->AsyncReceiver);
+	E->DefaultComponent = Spawn(false, E->DefaultReceiver);
+
+	WaitFor(this, 10.0, TEXT("input sent during startup never arrived (async writes)"), [E]
+	{
+		const FString Text = E->AsyncReceiver->Text();
+		return Text.Contains(TEXT("early_one")) && Text.Contains(TEXT("early_two"));
+	});
+	WaitFor(this, 10.0, TEXT("default-mode component never started"), [E] { return E->DefaultComponent->bProcessIsRunning; });
+	ADD_LATENT_AUTOMATION_COMMAND(FDelayedFunctionLatentCommand([this, E]
+	{
+		TestEqual(TEXT("async writes: one process started"), E->AsyncReceiver->Begins, 1);
+		TestEqual(TEXT("default mode: one process started"), E->DefaultReceiver->Begins, 1);
+		E->AsyncComponent->StopProcess();
+		E->DefaultComponent->StopProcess();
+	}, 0.5f));
+	WaitFor(this, 10.0, TEXT("processes did not end"), [E] { return E->AsyncReceiver->Ends == 1 && E->DefaultReceiver->Ends == 1; });
+	Then([E]
+	{
+		for (AActor* Actor : { E->AsyncComponent->GetOwner(), E->DefaultComponent->GetOwner() }) { Actor->Destroy(); }
+		E->GameInstance->Shutdown();
+		GEngine->DestroyWorldContext(E->World);
+		E->World->DestroyWorld(false);
+		E->GameInstance->RemoveFromRoot();
+		E->AsyncReceiver->RemoveFromRoot();
+		E->DefaultReceiver->RemoveFromRoot();
+	});
 	return true;
 }
 

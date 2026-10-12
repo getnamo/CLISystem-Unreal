@@ -25,7 +25,7 @@ UCLIProcessComponent::~UCLIProcessComponent()
 
 void UCLIProcessComponent::SendInput(const FString& Text)
 {
-	if (bLazyAutoStartProcess && !bProcessIsRunning)
+	if (bLazyAutoStartProcess && !bProcessIsRunning && !bProcessStarting)
 	{
 		StartProcess();
 	}
@@ -36,12 +36,14 @@ void UCLIProcessComponent::StartProcess()
 {
 	if (ProcessHandler)
 	{
+		bProcessStarting = true;
 		ProcessHandler->StartProcess(CLIParams);
 	}
 }
 
 void UCLIProcessComponent::StopProcess()
 {
+	bProcessStarting = false;
 	if (ProcessHandler)
 	{
 		ProcessHandler->StopProcess();
@@ -55,6 +57,7 @@ void UCLIProcessComponent::InitializeComponent()
 
 	ProcessHandler->OnProcessBegin = [this](const int32 ProcessId, bool bStartSucceded)
 	{
+		bProcessStarting = false;
 		bProcessIsRunning = true;
 		OnBeginProcessing.Broadcast(FString::Printf(TEXT("Startup Success: %d"), bStartSucceded));
 	};
@@ -71,6 +74,7 @@ void UCLIProcessComponent::InitializeComponent()
 
 	ProcessHandler->OnProcessEnd = [this](const int32 ProcessId, int32 ReturnCode)
 	{
+		bProcessStarting = false;
 		bProcessIsRunning = false;
 		OnEndProcessing.Broadcast(FString::Printf(TEXT("ReturnCode: %d"), ReturnCode));
 	};
