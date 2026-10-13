@@ -446,7 +446,7 @@ void FSubProcessHandler::StartProcess(const FProcessParams& InParams)
 
 					while (WaitLockActive)
 					{
-						FPlatformProcess::Sleep(0.1);
+						FPlatformProcess::Sleep(0.1f);
 					}
 				}
 
